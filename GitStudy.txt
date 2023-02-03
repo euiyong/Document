@@ -1,4 +1,4 @@
 [VisualStudioCode]
 
 플러그인
- - Git Graph 설치
+ - Git Graph 설치 할 것
