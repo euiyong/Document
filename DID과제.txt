@@ -149,3 +149,26 @@ MessageConverter 변경
 
 SpringBoot DB Transation
  @Service 에 @Transational 사용  
+ 
+ 
+ SpringBoot / IntelliJ HotSwap 
+  * DEBUG 모드에서만 동작
+  https://devwithpug.github.io/spring/about-hot-swap-in-spring-boot/
+  a. dependency
+   developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+  b. Edit Configuration
+   On 'Update' action: How swap classes and update trigger file if failed
+   On frame deactivation: Update classes and resources
+
+  * class 수정시 빌드 하면 적용 
+    > BUILD 하지 않고클리아언트 요청시 업데이트 됨
+    ctrl + f9 - 전체 compile / build
+    ctrl + shift + f9 - 부분 compile  
+
+  하지만 HotSwap이 만능은 아니며 아래와 같은 경우는 지원되지 않는다.
+    클래스 또는 메소드 이름 변경 시
+    메소드의 파라미터 변경 시
+    새로운 메소드 추가 또는 기존 메소드 삭제 시
+    새로운 클래스 추가 또는 기존 클래스 삭제 시
+  dependency 변경 시 적용 x   
