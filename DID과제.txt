@@ -165,6 +165,7 @@ SpringBoot DB Transation
     > BUILD 하지 않고클리아언트 요청시 업데이트 됨
     ctrl + f9 - 전체 compile / build
     ctrl + shift + f9 - 부분 compile  
+  * 리스스도 추가/삭제/변경시 자동 build      
 
   하지만 HotSwap이 만능은 아니며 아래와 같은 경우는 지원되지 않는다.
     클래스 또는 메소드 이름 변경 시
