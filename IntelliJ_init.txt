@@ -1,0 +1,35 @@
+ File encoding 설정 : UTF_8
+ Settings > Editor > File encodings : 모두 UTF-8 설정
+
+[IntelliJ] Cause: invalid source release: 11 에러 - 자버 버전 변경하기
+https://charliecharlie.tistory.com/315
+1. 기본 자바 버전 11로 변경하기
+2. 프로젝트 java버전 변경
+ - Project Structure 화면으로 이동 후 Project SDK와 Project language level을 프로젝트 버전에 맞게 변경
+ - Gradle java 버전 변경
+   Project Settings > Build > Build Tools > Gradle
+   . Gradle JVM 11로 선택
+   . Build and run using / Run tests using 모두 IntelliJ IDEA 선택
+
+Lombok  사용하기
+ - Plugin에 'Lombok' 설치
+ - Settings > Build > Compiler > annotation processors
+  . Enable annotation processing
+
+
+[Version Controller]
+0. Git 설치
+1. Local Git Commit
+ Version Controller > Create Git repository : 프로젝트 폴더 지정
+ Commit (Local change)
+
+2. GitLab(GitHub) Push
+ - Push > Define Remote
+ https://gitlab.dreamsecurity.com/ 접속 / 로그인
+  Create blank project
+
+
+  gitlab ssl certificate problem unable to get local issuer certificate 오류
+   ssl 인증서가 필요 없는 경우 ssl 검사를 하지 않게 조치
+   git config --global http.sslVerify false
+   https://needneo.tistory.com/241
