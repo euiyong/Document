@@ -1,0 +1,151 @@
+1. 스프링 부트 스타터 사이트로 이동해서 스프링 프로젝트 생성
+https://start.spring.io
+
+프로젝트 선택
+Project: Gradle - Groovy Project
+  Language: Java
+  Spring Boot: 2.x
+Project Metadata
+  Group: kr.re.etri.did
+  Artifact: DidManageServer
+  Name: DidManageServer
+  Package name: kr.re.etri.did.idmngserver
+  Packaging: War (주의)
+  Java: 11
+
+Dependencies: Spring Web, Lombok
+
+
+2. IntelliJ 기본 세팅
+
+[application.yml]
+server:
+  port: 44010
+  servlet.context-path: /DidManageServer
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+
+
+[JSP 라이브러리 build.gradle 추가]
+//JSP 추가 시작
+implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+implementation 'javax.servlet:jstl'
+//JSP 추가 끝
+
+main/webapp/WEB-INF/views/ 폴더 생성
+
+* index 페이지
+ webapp/index.html 생성하면됨
+
+* index.jsp 설정방법 [확인]
+ 1. webapp/WEB-INF/views/index.jsp 파일 생성
+ 2. Controller에 root 요청시 index viewName 전달
+ @RequestMapping("/")
+  public String index() {
+      return "index";
+  }
+
+!! 이전처럼 webapp/index.jsp 를 welcome-file로 등록하는 방법은?
+https://dymn.tistory.com/45
+
+
+[Dependency 설정]
+maven 2 gradle Converter
+https://sagioto.github.io/maven2gradle/
+
+* Local jar Dependencies 설정
+ 1. [Project]/lib 폴더 만들고 jar 복사
+ 2. build.gradle에 Dependency 추가 
+   - implementation fileTree(dir: 'lib', include: ['*.jar'])
+* MyBatis 관련 Dependency 추가 (기존 org.mybatis group Dependency는 삭제, 종속으로 포함)
+implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.1.4' 
+* com.fasterxml.jackson.core:jackson dependency 오류로 삭제
+
+[소스 코드 이전]
+1. Java
+ - 패키지 경로를 맞추었기 때문에 package 그대로 복사
+2. resource
+ - resources 폴더에 query copy
+
+* MyBatis 설정
+ - application.yml 에 Spring Datasource 설정
+ 
+
+[기타 변경 사항]
+* @Value("#{didservice_prop}") 변경
+ servlet-context.xml 의 properties 읽는 코드를 아래와 같이 변경 필요.
+Properties prop = PropertiesLoaderUtils.loadProperties(new ClassPathResource("config/didservice.properties"));
+
+* DidGenerator
+ - SpringBoot는 서버 web.xml의 ListerClass 
+ - Logger는 @Slf4j 이용
+
+
+[문의]
+1. 메시지컨버터 변경은?
+- MappingJackson2HttpMessageConverter -> ExtHelper
+  ExtHelperMvcConfigurer 클래스 참조
+2. DataSourceTransactionManager 설정 
+3. 리소스 매핑시 파일시스템 경로 지정은 (Virtual)등록을 못 하므로 ServerInitializer.java 만들고 @PostConstruct 이용하여 수행하도록 변경
+ - DidGenerator.java는 삭제
+  @Configuration
+  public class WebConfig implements WebMvcConfigurer {
+      
+      @Override
+      public void addResourceHandlers(ResourceHandlerRegistry registry) {
+          registry.addResourceHandler("/resources/**")
+              .addResourceLocations("file:my-resources/");
+      }
+  }
+  * "file:C:/proj/img/"
+
+4. Hot deploy 방법은?
+
+
+ [이슈 사항]
+ https://docs.google.com/spreadsheets/d/10bZMoBNRSAMBmAqg_EWOAgOOeOnC2l4f7O5YPLTABp4/edit?usp=sharing
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+Unit TEST
+@Test -> TestUtil.java
+@SpringBootTest
+
+Logging 속성
+ - application.yml 변수, pattern 등
+ - DB 쿼리 로깅?
+SQL 로깅 설정
+ https://velog.io/@harpuria/Springboot-MyBatis-%EC%BF%BC%EB%A6%AC-%EB%A1%9C%EA%B7%B8-%EC%84%A4%EC%A0%95
+ a. dependency
+  implementation group: 'org.bgee.log4jdbc-log4j2', name:'log4jdbc-log4j2-jdbc4.1', version: '1.16'
+ b. resorucej/log4jdbc.log4j2.properties 추가
+ c. application.yml
+   - datasource 설정
+   - jdbc 로거 설정
+
+
+properties 속성 로드
+ annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+ @ConfigurationProperties(prefix = "app.properties")
+
+* 테스트 실습
+MyTestController.java
+
+MessageConverter 변경 
+- MappingJackson2HttpMessageConverter -> ExtHelper
+  ExtHelperMvcConfigurer 클래스 참조
+   Adapter 
+    a. Date  : GMT(Zulu Time) 변환
+    b. byte[]  : HexaString
+    c. Proof : DIDSDK, DID과제 클래스가 상이 (kr.re.etri.ezid.vc.core.Proof / kr.re.etri.ezid.didprops.proof)
+    d. Athentication : id or publicKey 만 반환
+  TEST)  변경전, Gson Default, ExtHelper
+
+
+SpringBoot DB Transation
+ @Service 에 @Transational 사용  
