@@ -44,8 +44,7 @@ Windows
  - import 정리 : Ctrl + Alt + O
  - implement Class 선택 : Ctrl + Alt + B
  - Shift + F6 : 클래스/파일명 수정
- - F2 : 에러 코드로 커서 이동
- - Replace in files : Cmd + Shift + R
+
 
 Spring Stream을 String으로 변환
 String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
@@ -57,6 +56,252 @@ Junit TEST
 /WEB-INF
  - 직접 아닌 컨트롤러 통해서만 호출 되길 원할 경우 위치
 
+공통처리 : 프론트 컨트롤러(Front Controller) 
 
-* 클래스 다이어그램
- - 클래스명 오른클릭 다이어그램
+-----------------------------------
+Logging
+-----------------------------------
+#전체 로그 레벨 설정(기본 info)
+logging.level.root=debug
+# hello.springmvc 패키지 하위 로그레벨 설정
+logging.level.hello.springmvc=trace
+
+private final Logger log = LoggerFactory.getLogger(getClass());
+ == @Slf4j  (Lombok 지원)
+log.trace("trace log={}", name);  변수 매핑
+log.trace("trace log=" + name); 
+ => 로그레벨과 상관없이 + 연산이 일어나기 때문에 이렇게 사용하면 안됨! 
+이 이슈 때문에 과거에는
+  log.isTraceEnabled(){ ... } 로 처리 해주는 코드가 있었음
+
+log.info("helloData={}", helloData);  //객체 로깅도 가능
+ -> helloData=HelloData(username=hello, age=20)
+
+* 로그에 대해서 더 자세한 내용
+ SLF4J - http://www.slf4j.org
+ Logback - http://logback.qos.ch
+* 스프링 부트가 제공하는 로그 기능
+ https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.logging
+
+
+ -----------------------------------------------------------------------
+* 파라미터 세팅  
+  @RequestParam("username") String memberName 
+  @RequestParam String username //파라미터 이름이 변수명과 같을 경우 생략 가능
+  String username //파라미터 같을 경우 && String, int, Integer 단순 타입인 경우 @RequestParam 도 생략 가능 (추천X)
+  @RequestParam(required = false) Integer age //필수 값 제외 (기본:true) 값이 없을 경우 null 할당되므로 int가 아닌 Integer 사용 해야 함
+    . required = true 인데도 age=  일 경우 "" 넘어 오므로 필수 조건 통과
+  @RequestParam(defaultValue = "-1") int age // 기본 값 지정하여 int 사용도 가능  null 혹은 빈 값인 경우 기본값 설정 됨
+  @RequestParam MultiValueMap 하나의 key에 여러 값을 받을 수 있다.
+
+* PathVariable
+  @GetMapping("/mapping/{userId}")
+  public String mappingPath(@PathVariable String userId) { ... }
+
+* 파라미터로 추가 매핑(조건)시 호출
+  @GetMapping(value = "/mapping-param", params = "mode=debug")
+  mode 파라미터가 debug 일 경우에만 호출
+  params = "mode"
+  params = "!mode"
+  params = "mode=debug"
+  params = "mode!=debug"
+  params = {"mode=debug", "data=good"}
+
+* 특정 헤더로 추가 매핑  
+  @GetMapping(value = "/mapping-header", headers = "mode=run")
+
+* 미디어 타입 조건 매핑
+@PostMapping(value = "/mapping-consume", consumes = MediaType.APPLICATION_JSON_VALUE)
+
+* 미디어 타입 조건 매핑 - HTTP  요청 Accept, produce
+@PostMapping(value = "/mapping-produce", produces = MediaType.TEXT_HTML_VALUE)
+
+
+HttpMethod httpMethod,
+Local locale,
+@RequestHeader MultiValueMap<String, String> headerMap,
+@RequestHeader("host") String host,
+@CookieValue(value = "myCookie", required = false) String cookie
+
+
+@Controller 의 사용 가능한 파라미터 목록은 다음 공식 메뉴얼에서 확인할 수 있다.
+ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-annarguments
+
+@Conroller 의 사용 가능한 응답 값 목록은 다음 공식 메뉴얼에서 확인할 수 있다.
+ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-annreturn-types
+
+@MatrixVariable @RequestPart
+  
+
+SpringBoot에서 static 폴더는 외부에 공개 됨 (내장통캣 webapp 사용 못 할 경우)
+
+
+롬복 @Data : @Getter , @Setter , @ToString , @EqualsAndHashCode , @RequiredArgsConstructor 를 자동으로 적용
+
+@ModelAttribute HelloData helloData
+ : setter 호출하여 멤버 값을 세팅 // @ModelAttribute 생략 가능
+
+
+[HTTP요청 단순 텍스트]
+ String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+ HttpEntity<String> httpEntity  : HTTP header/body 정보 조회 // 응답에도 사용가능
+  . 상속 받은 RequestEntity, ResponseEntity 사용 가능
+-> @RequestBody, @ResponseBody 가 가장 효과적
+
+[HTTP요청 JSON]
+@RequestBody String messageBody // HelloData helloData = objectMapper.readValue(messageBody, HelloData.class);
+@RequestBody HelloData helloData
+HttpEntity<HelloData> httpEntity // HelloData data = httpEntity.getBody();
+
+
+[정적 리소스] - 파일 변경 없이 그대로 서비스
+스프링 부트는 클래스패스의 다음 디렉토리에 있는 정적 리소스를 제공한다.
+/static , /public , /resources , /META-INF/resources
+
+뷰 템플릿 경로
+src/main/resources/templates
+
+* Thymeleaf 스프링부트 설정 시 자동
+ - ThymeleafViewResolver 와 필요한 스프링빈들 등록
+ - application.properties 에 등록
+  spring.thymeleaf.prefix=classpath:/templates/
+  spring.thymeleaf.suffix=.html
+
+
+@ResponseStatus(HttpStatus.OK) : 상태 지정
+
+[메시지 컨버터 3개]
+ByteArrayHttpMessageConverter : application/octet-stream
+StringHttpMessageConverter : text/plain
+MappingJackson2HttpMessageConverter : application/json
+
+-------------------------------------
+* bootstrap 활용
+ - 모듈 다운로드 후 bootstrap.min.css 파일을 static/css 폴더에 붙여 넣고 활용
+* CSS 등 리소스가 로드 안될때는 out 폴더에 생성이 안된 경우이며, out 폴더 삭제 후 서버 시작하면 생성 됨
+* [주의]/resouce/static 폴더의 HTML은 실제 서비스에서도 공개된다.
+
+* 의존성 주입
+https://jackjeong.tistory.com/41
+https://madplay.github.io/post/why-constructor-injection-is-better-than-field-injection
+ 1. 생성자 주입
+  - 이 방법을 추천 (순환참조 발생하지 않음)
+  - 단일 생성자 경우 @Autowired 생략 가능
+  - @RequiredArgsConstructor  lombok 사용시 생성자도 생략 가능
+    Generates a constructor with required arguments. Required arguments are final fields and fields with constraints such as @NonNull.
+ 2. 필드 주입
+ 3. 수정자 주입
+
+ @PostConstruct : 의존성 주입 후 호출. 초기 데이터 세팅용
+
+
+ * thymeleaf
+ https://www.thymeleaf.org/doc/articles/standardurlsyntax.html
+<a th:href="@{/order/list}"> -> <a href="/myapp/order/list">
+th:onclick="|location.href='@{/basic/items/add}'|"
+* thymeleaf 핵심은 th:xxx 가 붙은 부분은 서버사이드에서 렌더링 되고, 기존것을 대체한다. th:xxx 이 없으면 기존 html의 xxx 속성이 그대로 사용 된다.
+  따라서 HTML의 보기를 유지하면서 템플릿 기능도 할 수 있다.
+* URL링크 표현식 @{...} : 서블릿 컨텍스트를 자동으로 포함 (스프링부트에서는 이 컨텍스트 의미 x ??)
+* 리터럴 대체 - | ... |  연산 없이 치환 가능
+ <span th:text="'Welcome to our application, ' + ${user.name} + '!'">
+ <span th:text="|Welcome to our application, ${user.name}!|">
+ th:onclick="'location.href=' + '\'' + @{/basic/items/add} + '\''"
+ th:onclick="|location.href='@{/basic/items/add}'|"
+
+ * URL 링크 표현식2 
+  th:href="@{/basic/items/{itemId}(itemId=${item.id})}"
+  th:href="@{|/basic/items/${item.id}|}"
+
+  th:href="@{/basic/items/{itemId}(itemId=${item.id}, query='test')}"
+  http://localhost:8080/basic/items/1?query=test
+
+  * 동일 URL로 구분, 이동은 GetMapping("/add"), 저장은 PostMapping("/add")
+  * th:action  같은 URL이면 생략 가능
+    th:action="/basic/items/add"
+
+ * public String addItemV2(@ModelAttribute("item") Item item, Model model)
+  Model Attribute에 다시 담아 주기 때문에 model.addAttribute("item", item); 가 필요 없음
+
+* public String addItemV3(@ModelAttribute Item item)
+  클래스명 Item을 소문자로 바꾼 item 이름으로 ModelAttribute 에 넣어 준다.
+
+* public String addItemV3(Item item)
+  ModelAttribute 생략 가능
+
+* redirect 
+ "redirect:basic/items/{itemId}"; //redirect 해야 경로가 바뀜
+
+* 코드 이동 : 코드 블럭 지정 후 Ctrl+Shift 위/아래 화살표
+
+* PRG Post/Redirect/Get 패턴
+ - 저장 후 조회화면 다시 호출
+   return "redirect:/basic/items/" + item.getId();
+
+* RedirectAttributes
+    redirectAttributes.addAttribute("itemId", savedItem.getId());
+    redirectAttributes.addAttribute("isSave", true);
+    return "redirect:/basic/items/{itemId}";
+-> itemId는 치환되고, isSave는 파라미터로 추가 됨
+   http://localhost:8080/basic/items/3?isSave=true
+> view 에서 파라미터는 thymeleaf param 으로 받을 수 있었음
+<h2 th:if="${param.isSave}" th:text="'저장 완료'"></h2>
+
+
+ctrl + shift + enter - Code completion 코드 일부 작성 후 실행 -> 완성 후 ; 기호까지 자동완성
+Ctrl + Shift + i - 코드 구현부 즉시보기
+ctrl + shift + t - 해당 클래스의 입력 정보 바탕으로 테스트 코드 작성
+ctrl + 클릭 or ctrl + b - 해당 클래스 혹은 메서드의 구현으로 이동
+ctrl + alt + 클릭 or ctrl + alt + b - 해당 클래스 혹은 메서드의 구현목록 표시
+f2 - 코드 에러가 발생하는 가까운 위치로 이동
+alt + enter - 코드에서 오류가 발견된 경우 해결 방안 제시 (퀵 픽스)
+ctrl + alt + p - 파라미터 자동완성
+ctrl + alt + i - 블락코드 자동 정렬
+ctrl + f9 - 전체 compile / build
+ctrl + shift + f9 - 부분 compile
+ctrl + shift + f - Find in files
+ctrl + shift + r - Replace in files
+alt + left/right - 에디터창 이동
+alt + up/down - 메서드 단위 이동
+ctrl + shift + up/down - 코드 블록 위/아래 이동
+Ctrl+Alt+M - Extract Method
+
+[Auto-import]
+File | Settings | Editor | General | Auto Import
+ Add unambiguous imports on the fly
+ Optimize imports on the fly 
+
+ public class CustomJsonMessageConverter extends AbstractJackson2HttpMessageConverter {
+
+    public CustomJsonMessageConverter() {
+        super(new MediaType("application", "json"));
+    }
+
+    @Override
+    protected void configureObjectMapper(ObjectMapper objectMapper) {
+        // Configure the ObjectMapper with custom serialization/deserialization options
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+}
+
+ 
+
+
+
+Thymeleaf
+  [[${data}]]  태그내에서 데이터 출력하기 
+    <li>직접 출력하기 = [[${data}]]</li>
+  utext : Unescape 출력 (태그를 그대로 출력)
+  th:inline="none" [[...]] 안 문법을 Thymeleaf가 해석하지 않도록
+   UnEscape : [(...)]
+
+SpringEL
+ ${user.username} = ${user.getUsername()} = ${user['username']}
+
+지역변수 선언 (scope 태그안)
+ <div th:with="first=${users[0]}"> <span th:text="${first}"></span> </div>
+
+  [인텔리제이 유료]
+  자동완성
+  플러그인
+  기타 ...
