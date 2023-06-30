@@ -333,3 +333,8 @@ GitHub Actions = Gitlab CI/CD
 
 * OctoTree 크롬 플러그인
  - GitHub 트리 형태로 볼수 있도록
+
+
+
+tracking 설정
+git branch --set-upstream-to=origin/<branch> main
